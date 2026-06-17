@@ -1,98 +1,63 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+# di — NestJS Dependency Injection demo
 
-## Description
+Small NestJS application that demonstrates dependency injection (DI) using a simple computer analogy:
+- A Computer exposes an HTTP controller.
+- The Computer depends on CpuService and DiskService.
+- CpuService and DiskService depend on a shared PowerService.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This project shows how to structure modules, providers, and exports so services can be injected across modules.
 
-## Project setup
+## Project structure (relevant files)
 
+- src/main.ts — bootstrap (creates the Nest app from ComputerModule)
+- src/computer/computer.module.ts — root feature module for the Computer (imports CpuModule and DiskModule; registers ComputerController)
+- src/computer/computer.controller.ts — controller that consumes CpuService and DiskService via constructor injection
+- src/cpu/cpu.module.ts — declares and exports CpuService; imports PowerModule
+- src/cpu/cpu.service.ts — CpuService (depends on PowerService)
+- src/disk/disk.module.ts — declares and exports DiskService; imports PowerModule
+- src/disk/disk.service.ts — DiskService (depends on PowerService)
+- src/power/power.module.ts — provides and exports PowerService
+- src/power/power.service.ts — PowerService (shared provider)
+
+## How DI is implemented here
+
+- PowerService is declared in PowerModule and exported:
+  - PowerModule: providers: [PowerService], exports: [PowerService]
+- CpuModule and DiskModule import PowerModule so their services can receive PowerService instances:
+  - imports: [PowerModule]; providers: [CpuService] / [DiskService]; exports: [CpuService] / [DiskService]
+- ComputerModule imports CpuModule and DiskModule and exposes a controller that receives CpuService and DiskService via constructor injection.
+- All injections use Nest's constructor injection and the framework's provider resolution (no manual wiring).
+
+Example (conceptual):
+
+```typescript
+// constructor injection in a controller or service
+constructor(
+  private readonly cpuService: CpuService,
+  private readonly diskService: DiskService,
+) {}
+```
+
+This setup keeps services modular, easy to unit test (providers can be overridden), and simple to replace with mocks or alternative implementations.
+
+## Run (macOS)
+
+Install and start:
 ```bash
 $ npm install
-```
-
-## Compile and run the project
-
-```bash
-# development
 $ npm run start
-
-# watch mode
+# or watch mode
 $ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
 
-## Run tests
-
+Run tests:
 ```bash
-# unit tests
 $ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```
 
-## Deployment
+## Notes
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- To unit-test controllers/services, use Test.createTestingModule() and override providers with .overrideProvider(...).useValue(...) or .useClass(...).
+- Use module exports to share providers across modules; prefer small focused modules to keep dependencies clear.
